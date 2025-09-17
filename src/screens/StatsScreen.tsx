@@ -4,7 +4,7 @@ import { View, Text } from "react-native";
 export default function StatsScreen() {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Text>StatsScreen ✅</Text>
+      <Text>Statistikker</Text>
     </View>
   );
 }

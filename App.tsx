@@ -41,9 +41,9 @@ export default function App() {
   return (
     <NavigationContainer>
       <Tab.Navigator>
-        <Tab.Screen name="Today" component={TodayScreen} />
-        <Tab.Screen name="History" component={HistoryScreen} />
-        <Tab.Screen name="Stats" component={StatsScreen} />
+        <Tab.Screen name="Start" component={TodayScreen} />
+        <Tab.Screen name="Tidligere Træniger" component={HistoryScreen} />
+        <Tab.Screen name="Statistikker" component={StatsScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );
