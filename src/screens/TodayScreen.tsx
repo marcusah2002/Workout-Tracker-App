@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Button, Alert, TextInput, FlatList } from "react-native";
-import { all, run, stopWorkoutForDate } from "../db/sqlite";
+import {
+  View,
+  Text,
+  Button,
+  Alert,
+  TextInput,
+  FlatList,
+  Pressable,
+} from "react-native";
+import { all, deleteSet, run, stopWorkoutForDate } from "../db/sqlite";
 import {
   getSetsForWorkout,
   addSet,
   type Workout,
   type SetRow,
 } from "../db/sqlite";
+import ExercisePicker from "../components/ExcercisePicker";
+import { EXERCISES } from "../data/excercises";
 
 export default function TodayScreen() {
   const [todayWorkout, setTodayWorkout] = useState<Workout | null>(null);
@@ -14,7 +24,7 @@ export default function TodayScreen() {
   const [exercise, setExercise] = useState("");
   const [reps, setReps] = useState("");
   const [weight, setWeight] = useState("");
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = new Date().toLocaleDateString().slice(0, 10);
 
   const isActive = !!todayWorkout && !todayWorkout.ended_at;
   const isEnded = !!todayWorkout && !!todayWorkout.ended_at;
@@ -30,6 +40,12 @@ export default function TodayScreen() {
   async function reloadSets(workoutId: number) {
     const data = await getSetsForWorkout(workoutId);
     setSets(data);
+  }
+
+  async function handleDeleteSet(id: number) {
+    console.log("delete", id);
+    await deleteSet(id);
+    if (todayWorkout?.id) await reloadSets(todayWorkout.id);
   }
 
   useEffect(() => {
@@ -123,7 +139,6 @@ export default function TodayScreen() {
 
       {isActive && (
         <>
-          <Button title="Fortsæt workout" onPress={startOrContinue} />
           <Button title="Stop workout" onPress={stopToday} />
         </>
       )}
@@ -139,25 +154,26 @@ export default function TodayScreen() {
 
       <View style={{ gap: 8, opacity: isEnded ? 0.5 : 1 }}>
         <Text style={{ fontWeight: "600" }}>Tilføj sæt</Text>
-        <TextInput
-          placeholder="Øvelse"
+        <ExercisePicker
           value={exercise}
-          onChangeText={setExercise}
-          editable={!isEnded}
-          style={{ borderWidth: 1, borderRadius: 8, padding: 8 }}
+          onChange={setExercise}
+          options={EXERCISES}
+          placeholder="Søg/skriv øvelse"
         />
-        <TextInput
-          placeholder="Reps"
-          value={reps}
-          onChangeText={setReps}
-          keyboardType="numeric"
-          editable={!isEnded}
-          style={{ borderWidth: 1, borderRadius: 8, padding: 8 }}
-        />
+
         <TextInput
           placeholder="Vægt (kg)"
           value={weight}
           onChangeText={setWeight}
+          keyboardType="numeric"
+          editable={!isEnded}
+          style={{ borderWidth: 1, borderRadius: 8, padding: 8 }}
+        />
+
+        <TextInput
+          placeholder="Reps"
+          value={reps}
+          onChangeText={setReps}
           keyboardType="numeric"
           editable={!isEnded}
           style={{ borderWidth: 1, borderRadius: 8, padding: 8 }}
@@ -178,6 +194,9 @@ export default function TodayScreen() {
               <Text>
                 {item.reps} reps @ {item.weight ?? 0} {item.unit ?? "kg"}
               </Text>
+              <Pressable onPress={() => handleDeleteSet(item.id)} hitSlop={10}>
+                <Text style={{ color: "red" }}>🗑️</Text>
+              </Pressable>
             </View>
           )}
           ListEmptyComponent={<Text>Ingen sæt endnu.</Text>}

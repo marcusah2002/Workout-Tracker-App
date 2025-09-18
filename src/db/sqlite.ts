@@ -1,8 +1,6 @@
-// src/db/sqlite.ts
 import { Platform } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 
-/* ============== Typer ============== */
 export type Workout = {
   id: number;
   date: string;
@@ -21,7 +19,6 @@ export type SetRow = {
 
 const isWeb = Platform.OS === 'web';
 
-/* ============== Native (iOS/Android) ============== */
 let db: SQLite.SQLiteDatabase | null = null;
 
 async function initDbNative() {
@@ -49,7 +46,6 @@ async function initDbNative() {
     );
   `);
 
-  // Migration: tilføj ended_at hvis den ikke findes (ignorer fejl hvis den gør)
   try {
     await db.execAsync(`ALTER TABLE workouts ADD COLUMN ended_at TEXT;`);
   } catch {}
@@ -70,17 +66,13 @@ async function runNative(sql: string, params: any[] = []) {
   await d.runAsync(sql, params);
 }
 
-/* ============== Web fallback (localStorage) ============== */
-/** Workouts gemmes som en liste pr. dato, så du kan have flere på samme dag. */
 const listKey = (date: string) => `workouts_${date}`;
-const legacyKey = (date: string) => `workout_${date}`; // gammel enkelt-workout-nøgle
+const legacyKey = (date: string) => `workout_${date}`; 
 const setsKey = (workoutId: number) => `sets_${workoutId}`;
 
 async function initDbWeb() {
-  // no-op
 }
 
-// migrér evt. gammel enkelt-workout til listeformat
 function migrateIfNeeded(date: string) {
   const oldRaw = localStorage.getItem(legacyKey(date));
   const newRaw = localStorage.getItem(listKey(date));
@@ -111,7 +103,6 @@ function setSetsList(workoutId: number, arr: SetRow[]) {
 async function allWeb<T = any>(sql: string, params: any[] = []): Promise<T[]> {
   const trimmed = sql.trim();
 
-  // Workouts: SELECT * FROM workouts WHERE date=? [ORDER BY id DESC] [LIMIT 1]
   if (/^SELECT \* FROM workouts WHERE date=\?/i.test(trimmed)) {
     const date = String(params[0]);
     const arr = getList(date).sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
@@ -121,7 +112,6 @@ async function allWeb<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     return arr as T[];
   }
 
-  // Workouts: (valgfrit) SELECT * FROM workouts ORDER BY date DESC
   if (/^SELECT \* FROM workouts(?:\s+ORDER BY .*)?$/i.test(trimmed)) {
     const allDates: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -138,7 +128,6 @@ async function allWeb<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     return out as T[];
   }
 
-  // Sets: SELECT * FROM sets WHERE workout_id=? ORDER BY id DESC
   if (/^SELECT \* FROM sets WHERE workout_id=\? ORDER BY id DESC$/i.test(trimmed)) {
     const wid = Number(params[0]);
     const arr = getSetsList(wid).sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
@@ -151,7 +140,6 @@ async function allWeb<T = any>(sql: string, params: any[] = []): Promise<T[]> {
 async function runWeb(sql: string, params: any[] = []): Promise<void> {
   const trimmed = sql.trim();
 
-  // Workouts: INSERT
   if (/^INSERT INTO workouts \(date\) VALUES \(\?\)$/i.test(trimmed)) {
     const date = String(params[0]);
     const arr = getList(date);
@@ -160,12 +148,11 @@ async function runWeb(sql: string, params: any[] = []): Promise<void> {
     return;
   }
 
-  // Workouts: UPDATE ended_at på seneste aktive
   if (/^UPDATE workouts SET ended_at=\? WHERE date=\? AND ended_at IS NULL$/i.test(trimmed)) {
     const endedAt = String(params[0]);
     const date = String(params[1]);
     const arr = getList(date);
-    const idx = arr.findIndex(w => !w.ended_at); // seneste aktive (vores model gemmer nyeste først i UI)
+    const idx = arr.findIndex(w => !w.ended_at); 
     if (idx !== -1) {
       arr[idx].ended_at = endedAt;
       setList(date, arr);
@@ -173,7 +160,6 @@ async function runWeb(sql: string, params: any[] = []): Promise<void> {
     return;
   }
 
-  // Sets: INSERT
   if (/^INSERT INTO sets \(workout_id, exercise, reps, weight, unit\) VALUES \(\?,\?,\?,\?,\?\)$/i.test(trimmed)) {
     const [workoutId, exercise, reps, weight, unit] = params;
     const wid = Number(workoutId);
@@ -191,10 +177,8 @@ async function runWeb(sql: string, params: any[] = []): Promise<void> {
     return;
   }
 
-  // Sets: DELETE
   if (/^DELETE FROM sets WHERE id=\?$/i.test(trimmed)) {
     const id = Number(params[0]);
-    // Find hvilken workout liste har dette id
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i) || '';
       if (key.startsWith('sets_')) {
@@ -209,7 +193,6 @@ async function runWeb(sql: string, params: any[] = []): Promise<void> {
   throw new Error(`Web fallback: unsupported mutation: ${sql}`);
 }
 
-/* ============== Public API (fælles) ============== */
 export async function initDb() {
   return isWeb ? initDbWeb() : initDbNative();
 }
@@ -222,12 +205,10 @@ export async function run(sql: string, params: any[] = []) {
   return isWeb ? runWeb(sql, params) : runNative(sql, params);
 }
 
-/* ============== Workouts helpers ============== */
 export async function stopWorkoutForDate(dateISO: string) {
   const endedAt = new Date().toISOString();
 
   if (isWeb) {
-    // Web: vores UPDATE rammer allerede seneste aktive via runWeb
     await run(
       `UPDATE workouts SET ended_at=? WHERE date=? AND ended_at IS NULL`,
       [endedAt, dateISO]
@@ -235,7 +216,7 @@ export async function stopWorkoutForDate(dateISO: string) {
     return;
   }
 
-  // Native/SQLite: stop KUN den seneste aktive workout for datoen
+  
   await run(
     `UPDATE workouts
      SET ended_at=?
@@ -249,7 +230,7 @@ export async function stopWorkoutForDate(dateISO: string) {
   );
 }
 
-/* ============== Sets helpers ============== */
+
 export async function getSetsForWorkout(workoutId: number): Promise<SetRow[]> {
   return all<SetRow>(
     `SELECT * FROM sets WHERE workout_id=? ORDER BY id DESC`,

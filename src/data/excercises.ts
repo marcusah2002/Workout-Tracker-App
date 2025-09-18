@@ -27,5 +27,7 @@ export const EXERCISES: string[] = [
   "Lat Pullover",
   "Cable Row",
   "Machine Upper Back Row",
+  "Cable Lateral Raise",
+  "Dumbbell Lateral Raise",
   
 ];
