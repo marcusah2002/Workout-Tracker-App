@@ -254,3 +254,16 @@ export async function addSet(
 export async function deleteSet(id: number): Promise<void> {
   await run(`DELETE FROM sets WHERE id=?`, [id]);
 }
+
+export async function editSet(
+  workoutId: number,
+  exercise: string,
+  reps: number,
+  weight: number | null,
+  unit: string
+): Promise<void> {
+  await run(
+    `UPDATE sets SET reps=?, weight=?, exercise=?, unit=? WHERE id=?`,
+    [workoutId, exercise, reps, weight, unit]
+  );
+}

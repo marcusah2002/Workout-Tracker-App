@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Modal } from "react-native";
 import {
   View,
   Text,
@@ -8,7 +9,7 @@ import {
   FlatList,
   Pressable,
 } from "react-native";
-import { all, deleteSet, run, stopWorkoutForDate } from "../db/sqlite";
+import { all, deleteSet, run, stopWorkoutForDate, editSet } from "../db/sqlite";
 import {
   getSetsForWorkout,
   addSet,
@@ -25,9 +26,41 @@ export default function TodayScreen() {
   const [reps, setReps] = useState("");
   const [weight, setWeight] = useState("");
   const todayISO = new Date().toLocaleDateString().slice(0, 10);
+  const [editVisible, setEditVisible] = useState(false);
+  const [editing, setEditing] = useState<SetRow | null>(null);
+  const [editReps, setEditReps] = useState("");
+  const [editWeight, setEditWeight] = useState("");
 
   const isActive = !!todayWorkout && !todayWorkout.ended_at;
   const isEnded = !!todayWorkout && !!todayWorkout.ended_at;
+
+  function openEdit(item: SetRow) {
+    setEditing(item);
+    setEditReps(String(item.reps));
+    setEditWeight(item.weight != null ? String(item.weight) : "");
+    setEditVisible(true);
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+    const repsNum = parseInt(editReps, 10);
+    const weightNum = editWeight.trim() === "" ? null : Number(editWeight);
+    if (isNaN(repsNum)) {
+      Alert.alert("Ugyldigt tal.");
+      return;
+    }
+
+    await editSet(
+      editing.id,
+      editing.exercise,
+      repsNum,
+      weightNum,
+      editing.unit ?? "kg"
+    );
+
+    setEditVisible(false);
+    setEditing(null);
+  }
 
   async function reloadWorkout() {
     const rows = await all<Workout>(
@@ -40,6 +73,39 @@ export default function TodayScreen() {
   async function reloadSets(workoutId: number) {
     const data = await getSetsForWorkout(workoutId);
     setSets(data);
+  }
+
+  async function handleEditSet(item: SetRow) {
+    Alert.prompt(
+      "Rediger set",
+      "Indtast antal reps",
+      [
+        { text: "Annuller", style: "cancel" },
+        {
+          text: "Gem",
+          onPress: (value?: string) => {
+            void (async () => {
+              const text = value ?? "";
+              const newReps = parseInt(text, 10);
+              if (!isNaN(newReps)) {
+                await editSet(
+                  item.id,
+                  item.exercise,
+                  newReps,
+                  item.weight ?? null,
+                  item.unit ?? "kg"
+                );
+                if (todayWorkout?.id) await reloadSets(todayWorkout.id);
+              } else {
+                Alert.alert("Ugyldigt tal", "Reps skal være et heltal.");
+              }
+            })();
+          },
+        },
+      ],
+      "plain-text",
+      String(item.reps)
+    );
   }
 
   async function handleDeleteSet(id: number) {
@@ -197,6 +263,76 @@ export default function TodayScreen() {
               <Pressable onPress={() => handleDeleteSet(item.id)} hitSlop={10}>
                 <Text style={{ color: "red" }}>🗑️</Text>
               </Pressable>
+              <View style={{ flexDirection: "row", gap: 12 }}>
+                <Pressable onPress={() => openEdit(item)} hitSlop={10}>
+                  <Text style={{ color: "blue" }}>✏️</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => handleDeleteSet(item.id)}
+                  hitSlop={10}
+                >
+                  <Text style={{ color: "red" }}>🗑️</Text>
+                </Pressable>
+              </View>
+
+              {/* Modal nederst i JSX’en */}
+              <Modal visible={editVisible} transparent animationType="fade">
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: "rgba(0,0,0,0.4)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 16,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: "100%",
+                      maxWidth: 360,
+                      backgroundColor: "#fff",
+                      borderRadius: 12,
+                      padding: 16,
+                      gap: 8,
+                    }}
+                  >
+                    <Text style={{ fontWeight: "600", fontSize: 16 }}>
+                      Rediger set
+                    </Text>
+                    <Text>Reps</Text>
+                    <TextInput
+                      value={editReps}
+                      onChangeText={setEditReps}
+                      keyboardType="numeric"
+                      style={{ borderWidth: 1, borderRadius: 8, padding: 8 }}
+                    />
+                    <Text>Vægt (kg)</Text>
+                    <TextInput
+                      value={editWeight}
+                      onChangeText={setEditWeight}
+                      keyboardType="numeric"
+                      style={{ borderWidth: 1, borderRadius: 8, padding: 8 }}
+                    />
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "flex-end",
+                        gap: 12,
+                        marginTop: 8,
+                      }}
+                    >
+                      <Button
+                        title="Annuller"
+                        onPress={() => {
+                          setEditVisible(false);
+                          setEditing(null);
+                        }}
+                      />
+                      <Button title="Gem" onPress={saveEdit} />
+                    </View>
+                  </View>
+                </View>
+              </Modal>
             </View>
           )}
           ListEmptyComponent={<Text>Ingen sæt endnu.</Text>}
