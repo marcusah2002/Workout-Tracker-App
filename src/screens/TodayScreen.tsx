@@ -8,11 +8,11 @@ import {
   TextInput,
   FlatList,
   Pressable,
+  Platform,
 } from "react-native";
 import {
   all,
   deleteSet,
-  run,
   stopWorkoutForDate,
   editSet,
   startWorkoutForDate,
@@ -20,6 +20,7 @@ import {
 import {
   getSetsForWorkout,
   addSet,
+  startWorkout as dbStartWorkout,
   type Workout,
   type SetRow,
 } from "../db/sqlite";
@@ -63,6 +64,20 @@ export default function TodayScreen() {
     return `${m}:${String(s).padStart(2, "0")}`;
   }
 
+  async function handleStart() {
+    if (Platform.OS == "ios")
+      Alert.prompt("Ny workout", "hvad skal træningen hedde?", async (name) => {
+        if (name) {
+          await dbStartWorkout(todayISO, name);
+          await reloadWorkout();
+        }
+      });
+    else {
+      await dbStartWorkout(todayISO, "Workout");
+      await reloadWorkout();
+    }
+  }
+
   async function reloadWorkout() {
     const rows = await all<Workout>(
       "SELECT * FROM workouts WHERE date=? ORDER BY id DESC LIMIT 1",
@@ -95,21 +110,11 @@ export default function TodayScreen() {
     else setSets([]);
   }, [todayWorkout?.id]);
 
-  async function startWorkout() {
-    try {
-      if (!todayWorkout) {
-        await startWorkoutForDate(todayISO);
-        await reloadWorkout();
-      }
-    } catch (e) {
-      console.error("INSERT/select failed", e);
-      Alert.alert("Fejl", "Kunne ikke oprette/indlæse dagens workout");
-    }
-  }
   //Start ny træning (Efter tidligere træning er blevet afsluttet)
   async function startNewWorkout() {
     try {
-      await startWorkoutForDate(todayISO);
+      await dbStartWorkout(todayISO, "Workout");
+      await handleStart();
       await reloadWorkout();
     } catch (e) {
       console.error("INSERT failed", e);
@@ -195,7 +200,7 @@ export default function TodayScreen() {
   return (
     <View style={{ flex: 1, padding: 16, gap: 12 }}>
       <Text style={{ fontSize: 20, fontWeight: "600" }}>
-        Dagens workout ({todayISO})
+        {todayWorkout?.name ?? "Dagens workout"} ({todayISO})
       </Text>
       {todayWorkout?.started_at && !todayWorkout?.ended_at && (
         <Text style={{ fontSize: 16 }}>
@@ -225,7 +230,7 @@ export default function TodayScreen() {
         </Text>
       )}
 
-      {!todayWorkout && <Button title="Start workout" onPress={startWorkout} />}
+      {!todayWorkout && <Button title="Start workout" onPress={handleStart} />}
       {isActive && <Button title="Stop workout" onPress={stopToday} />}
       {isEnded && (
         <>
@@ -286,7 +291,7 @@ export default function TodayScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={{ fontWeight: "600" }}>{item.exercise}</Text>
                 <Text>
-                  {item.reps} reps @ {item.weight ?? 0} {item.unit ?? "kg"}
+                  {item.reps} reps med {item.weight ?? 0} {item.unit ?? "kg"}
                 </Text>
               </View>
 

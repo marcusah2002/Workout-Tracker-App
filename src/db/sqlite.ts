@@ -3,6 +3,7 @@ import * as SQLite from "expo-sqlite";
 export type Workout = {
   id: number;
   date: string;
+  name: string;
   notes?: string | null;
   ended_at?: string | null;
   started_at?: string | null;
@@ -52,6 +53,9 @@ async function initDbNative() {
   try {
     await db.execAsync(`ALTER TABLE workouts ADD COLUMN ended_at TEXT;`);
   } catch {}
+  try {
+    await db.execAsync(`ALTER TABLE workouts ADD COLUMN name TEXT;`)
+  } catch {}
 }
 
 async function getDb(): Promise<SQLite.SQLiteDatabase> {
@@ -86,6 +90,14 @@ export async function startWorkoutForDate(dateISO: string): Promise<void> {
   await run(
     `INSERT INTO workouts (date, started_at) VALUES (?, ?)`,
     [dateISO, startedAt]
+  )
+}
+
+export async function startWorkout(dateISO: string, name: string){
+  const startedAt = new Date().toISOString();
+  await run (
+    `INSERT INTO workouts (date, name, started_at) VALUES (?, ?, ?)`,
+    [dateISO, name, startedAt]
   )
 }
 
