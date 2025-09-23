@@ -96,9 +96,7 @@ export default function ExercisePicker({
                   styles.row,
                   pressed && styles.rowPressed,
                 ]}
-              >
-                <Text>➕ Tilføj “{query.trim()}”</Text>
-              </Pressable>
+              ></Pressable>
             }
             style={{ maxHeight: 220 }}
           />

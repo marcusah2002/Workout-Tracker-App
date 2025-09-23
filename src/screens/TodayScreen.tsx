@@ -25,7 +25,7 @@ import {
   type SetRow,
 } from "../db/sqlite";
 import ExercisePicker from "../components/ExcercisePicker";
-import { EXERCISES } from "../data/excercises";
+import { EXERCISE_NAMES } from "../data/excercises";
 
 export default function TodayScreen() {
   const [todayWorkout, setTodayWorkout] = useState<Workout | null>(null);
@@ -241,12 +241,10 @@ export default function TodayScreen() {
         </>
       )}
       <View style={{ gap: 8, opacity: isEnded ? 0.5 : 1 }}>
-        <Text style={{ fontWeight: "600" }}>Tilføj sæt</Text>
-
         <ExercisePicker
           value={exercise}
           onChange={setExercise}
-          options={EXERCISES}
+          options={EXERCISE_NAMES}
           placeholder="Søg/skriv øvelse"
         />
 
