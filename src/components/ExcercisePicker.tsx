@@ -45,25 +45,37 @@ export default function ExercisePicker({
     }
   }
 
+  function clearSearchBar() {
+    setQuery("");
+  }
+
   const showAddRow =
     query.trim().length > 0 &&
     !options.some((o) => o.toLowerCase() === query.trim().toLowerCase());
 
   return (
     <View style={styles.wrap}>
-      <TextInput
-        ref={inputRef}
-        placeholder={placeholder ?? "Søg/skriv øvelse"}
-        value={query}
-        onChangeText={(t) => {
-          setQuery(t);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 120)}
-        onSubmitEditing={submit}
-        style={styles.input}
-      />
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <TextInput
+          ref={inputRef}
+          placeholder={placeholder ?? "Søg/skriv øvelse"}
+          value={query}
+          onChangeText={(t) => {
+            setQuery(t);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 120)}
+          onSubmitEditing={submit}
+          style={[styles.input, { flex: 1 }]}
+        />
+
+        {query.length > 0 && (
+          <Pressable onPress={clearSearchBar} style={{ marginLeft: 8 }}>
+            <Text style={{ fontSize: 18 }}>✕</Text>
+          </Pressable>
+        )}
+      </View>
 
       {open && (
         <View style={styles.dropdown}>

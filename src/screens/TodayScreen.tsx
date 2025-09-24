@@ -65,19 +65,19 @@ export default function TodayScreen() {
   }
 
   async function handleStart() {
-    if (Platform.OS == "ios")
-      Alert.prompt("Ny workout", "hvad skal træningen hedde?", async (name) => {
-        if (name) {
-          await dbStartWorkout(todayISO, name);
-          await reloadWorkout();
+    if (Platform.OS === "ios") {
+      Alert.prompt("Ny Workout", "Hvad skal den hedde?", async (name) => {
+        if (!name || !name.trim()) {
+          Alert.alert("Du skal give træningen et navn", "F.eks: Bentræning");
+          return;
         }
+
+        await dbStartWorkout(todayISO, name.trim().toUpperCase());
+        await reloadWorkout();
       });
-    else {
-      await dbStartWorkout(todayISO, "Workout");
-      await reloadWorkout();
+      return;
     }
   }
-
   async function reloadWorkout() {
     const rows = await all<Workout>(
       "SELECT * FROM workouts WHERE date=? ORDER BY id DESC LIMIT 1",
@@ -113,7 +113,6 @@ export default function TodayScreen() {
   //Start ny træning (Efter tidligere træning er blevet afsluttet)
   async function startNewWorkout() {
     try {
-      await dbStartWorkout(todayISO, "Workout");
       await handleStart();
       await reloadWorkout();
     } catch (e) {
@@ -183,7 +182,7 @@ export default function TodayScreen() {
         weightNum,
         editing.unit ?? "kg"
       );
-      if (todayWorkout?.id) await reloadSets(todayWorkout.id); // <-- reloader listen
+      if (todayWorkout?.id) await reloadSets(todayWorkout.id);
       setEditVisible(false);
       setEditing(null);
     } catch (e) {

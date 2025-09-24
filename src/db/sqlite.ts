@@ -140,6 +140,10 @@ export async function deleteSet(id: number): Promise<void> {
   await run(`DELETE FROM sets WHERE id=?`, [id]);
 }
 
+export async function deleteWorkout(id: number): Promise<void> {
+  await run (`DELETE FROM workouts WHERE id=?`,[id]);
+}
+
 export async function editSet(
   setId: number,
   exercise: string,
