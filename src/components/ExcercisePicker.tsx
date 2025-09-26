@@ -7,6 +7,7 @@ import {
   Text,
   StyleSheet,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 type Props = {
   value: string;
@@ -72,7 +73,7 @@ export default function ExercisePicker({
 
         {query.length > 0 && (
           <Pressable onPress={clearSearchBar} style={{ marginLeft: 8 }}>
-            <Text style={{ fontSize: 18 }}>✕</Text>
+            <Ionicons name="close-circle" size={22} color="gray" />
           </Pressable>
         )}
       </View>

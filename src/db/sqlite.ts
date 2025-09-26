@@ -18,6 +18,65 @@ export type SetRow = {
   unit?: string | null;
 };
 
+export type RecentExercise = {
+  exercise: string;
+  lastDate: string;
+  setCount: string;
+}
+
+export type ExerciseHistoryRow = {
+  workout_id: number;
+  date: string;
+  exercise: string;
+  reps: number;
+  weight: number | null;
+  unit: number | null;
+}
+
+export async function getExerciseHistory(
+  exercise: string
+): Promise<ExerciseHistoryRow[]>{
+  return all <ExerciseHistoryRow>(
+    `
+    SELECT
+      s.workout_id,
+      w.date,
+      s.exercise,
+      s.reps,
+      s.weight,
+      s.unit
+    FROM sets s
+    JOIN workouts w ON w.id = s.workout_id
+    WHERE LOWER(s.exercise) = LOWER(?)
+    ORDER BY w.date ASC, s.workout_id ASC, s.id ASC
+    `,
+    [exercise.trim()]
+  );
+}
+
+export async function getRecentExercises(limit: number = 10): Promise<RecentExercise[]> {
+  const rows = await all<RecentExercise & { displayName: string }>(
+    `
+    SELECT
+      MIN(s.exercise) AS displayName,               
+      MAX(w.date)     AS lastDate,                  
+      COUNT(*)        AS setCount
+    FROM sets s
+    JOIN workouts w ON w.id = s.workout_id
+    GROUP BY LOWER(s.exercise)
+    ORDER BY lastDate DESC
+    LIMIT ?
+    `,
+    [limit]
+  );
+
+  return rows.map(r => ({
+    exercise: r.displayName,
+    lastDate: r.lastDate,
+    setCount: r.setCount,
+  }));
+}
+
 
 let db: SQLite.SQLiteDatabase | null = null;
 
