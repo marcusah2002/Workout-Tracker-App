@@ -33,6 +33,35 @@ export type ExerciseHistoryRow = {
   unit: number | null;
 }
 
+export type DailyMaxRow = {
+  date: string; 
+  maxWeight: number; 
+  reps: number;        
+};
+
+export async function getDailyMaxWeight(exercise: string): Promise<DailyMaxRow[]> {
+  return all<DailyMaxRow>(
+    `
+    SELECT w.date, s.weight AS maxWeight, s.reps
+    FROM sets s
+    JOIN workouts w ON w.id = s.workout_id
+    WHERE LOWER(s.exercise) = LOWER(?)
+      AND s.weight IS NOT NULL
+    ORDER BY w.date ASC, s.weight DESC
+    `,
+    [exercise.trim()]
+  ).then(rows => {
+    const bestPerDay: Record<string, DailyMaxRow> = {};
+    for (const row of rows) {
+      if (!bestPerDay[row.date]) {
+        bestPerDay[row.date] = row;
+      }
+    }
+    return Object.values(bestPerDay);
+  });
+}
+
+
 export async function getExerciseHistory(
   exercise: string
 ): Promise<ExerciseHistoryRow[]>{

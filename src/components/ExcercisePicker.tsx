@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import {
   View,
   TextInput,
@@ -6,6 +6,8 @@ import {
   Pressable,
   Text,
   StyleSheet,
+  type ViewStyle,
+  type TextStyle,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -14,6 +16,8 @@ type Props = {
   onChange: (val: string) => void;
   options: string[];
   placeholder?: string;
+  style?: ViewStyle;
+  inputStyle?: TextStyle;
 };
 
 export default function ExercisePicker({
@@ -21,10 +25,16 @@ export default function ExercisePicker({
   onChange,
   options,
   placeholder,
+  style,
+  inputStyle,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(value || "");
   const inputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    setQuery(value || "");
+  }, [value]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -48,6 +58,7 @@ export default function ExercisePicker({
 
   function clearSearchBar() {
     setQuery("");
+    onChange("");
   }
 
   const showAddRow =
@@ -55,7 +66,7 @@ export default function ExercisePicker({
     !options.some((o) => o.toLowerCase() === query.trim().toLowerCase());
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, style]}>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <TextInput
           ref={inputRef}
@@ -68,7 +79,7 @@ export default function ExercisePicker({
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 120)}
           onSubmitEditing={submit}
-          style={[styles.input, { flex: 1 }]}
+          style={[styles.input, { flex: 1 }, inputStyle]}
         />
 
         {query.length > 0 && (
@@ -109,7 +120,7 @@ export default function ExercisePicker({
                   styles.row,
                   pressed && styles.rowPressed,
                 ]}
-              ></Pressable>
+              />
             }
             style={{ maxHeight: 220 }}
           />
@@ -120,7 +131,7 @@ export default function ExercisePicker({
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: "relative", zIndex: 10 },
+  wrap: { position: "relative", zIndex: 10, width: "100%" },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
