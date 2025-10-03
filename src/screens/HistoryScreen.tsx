@@ -200,7 +200,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "white" }}>
+    <View style={{ flex: 1 }}>
       <View style={{ paddingHorizontal: 12, paddingTop: 8 }}>
         <Text style={{ color: "#777" }}>
           {count === null ? "Tæller..." : `Antal workouts i DB: ${count}`}

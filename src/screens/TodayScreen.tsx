@@ -26,6 +26,7 @@ import {
 } from "../db/sqlite";
 import ExercisePicker from "../components/ExcercisePicker";
 import { EXERCISE_NAMES } from "../data/excercises";
+import tw from "../lib/tailwind";
 
 export default function TodayScreen() {
   const [todayWorkout, setTodayWorkout] = useState<Workout | null>(null);
@@ -197,19 +198,19 @@ export default function TodayScreen() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12 }}>
-      <Text style={{ fontSize: 20, fontWeight: "600" }}>
+    <View style={tw`p-3`}>
+      <Text style={{ fontSize: 24, fontWeight: "600" }}>
         {todayWorkout?.name ?? "Dagens workout"} ({todayISO})
       </Text>
       {todayWorkout?.started_at && !todayWorkout?.ended_at && (
-        <Text style={{ fontSize: 16 }}>
+        <Text style={tw`mt-2 text-base`}>
           Tid i gang:{" "}
           <Text style={{ fontWeight: "600" }}>{formatMMSS(elapsedSec)}</Text>
         </Text>
       )}
 
       {todayWorkout?.started_at && todayWorkout?.ended_at && (
-        <Text style={{ fontSize: 16 }}>
+        <Text style={tw`mb-2 text-xl font-normal`}>
           Træningens varighed:{" "}
           <Text style={{ fontWeight: "600" }}>
             {Math.round(
@@ -230,13 +231,26 @@ export default function TodayScreen() {
       )}
 
       {!todayWorkout && <Button title="Start workout" onPress={handleStart} />}
-      {isActive && <Button title="Stop workout" onPress={stopToday} />}
+      {isActive && (
+        <Pressable
+          onPress={stopToday}
+          style={tw`mr-15 ml-15 mt-3 mb-3 bg-red-500 p-3 rounded-2xl items-center`}
+        >
+          <Text style={tw`text-white font-semibold`}>Stop Workout</Text>
+        </Pressable>
+      )}
       {isEnded && (
         <>
           <Text>
-            Afsluttet: {new Date(todayWorkout!.ended_at!).toLocaleTimeString()}
+            Afsluttet Kl:{" "}
+            {new Date(todayWorkout!.ended_at!).toLocaleTimeString()}
           </Text>
-          <Button title="Start ny workout" onPress={startNewWorkout} />
+          <Pressable
+            onPress={startNewWorkout}
+            style={tw`mr-15 ml-15 mt-3 mb-3 bg-blue-500 p-3 rounded-2xl items-center`}
+          >
+            <Text style={tw`text-white font-semibold`}>Start Ny Workout</Text>
+          </Pressable>
         </>
       )}
       <View style={{ gap: 8, opacity: isEnded ? 0.5 : 1 }}>
@@ -265,7 +279,12 @@ export default function TodayScreen() {
           style={{ borderWidth: 1, borderRadius: 8, padding: 8 }}
         />
 
-        <Button title="Gem sæt" onPress={saveSet} disabled={isEnded} />
+        <Pressable
+          onPress={saveSet}
+          style={tw`mr-25 ml-25 mt-3 mb-3 bg-green-500 p-3 rounded-2xl items-center`}
+        >
+          <Text style={tw`text-white font-semibold`}>Gem sæt</Text>
+        </Pressable>
       </View>
       <View style={{ flex: 1, marginTop: 12 }}>
         <Text style={{ fontWeight: "600", marginBottom: 8 }}>

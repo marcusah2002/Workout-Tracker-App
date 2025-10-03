@@ -72,7 +72,7 @@ export default function StatsScreen() {
   }, [loadRecentExercises]);
 
   return (
-    <View style={{ flex: 1, padding: 16, backgroundColor: "white" }}>
+    <View style={{ flex: 1, padding: 16 }}>
       <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
         <ExercisePicker
           value={query}
@@ -95,7 +95,6 @@ export default function StatsScreen() {
               paddingVertical: 10,
               borderBottomWidth: 0.5,
               borderColor: "#eee",
-              backgroundColor: pressed ? "#f8f8f8" : "white",
             })}
           >
             <Text style={{ fontWeight: "600" }}>{item.exercise}</Text>

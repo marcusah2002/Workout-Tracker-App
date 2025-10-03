@@ -71,6 +71,7 @@ export default function ExercisePicker({
         <TextInput
           ref={inputRef}
           placeholder={placeholder ?? "Søg/skriv øvelse"}
+          placeholderTextColor={"grey"}
           value={query}
           onChangeText={(t) => {
             setQuery(t);
